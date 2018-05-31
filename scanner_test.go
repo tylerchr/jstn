@@ -1,27 +1,79 @@
 package jstn
 
 import (
-	"bytes"
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestScanner(t *testing.T) {
 
-	var buf bytes.Buffer
+	var tokens []token
 
-	s := NewScanner(strings.NewReader(WrittenCollectionSchema))
+	s := newScanner(strings.NewReader(WrittenCollectionSchema))
 	for {
-		tok, lit := s.Scan()
+		tok, _ := s.Scan()
 		if tok == EOF {
 			break
 		}
-		if tok != WHITESPACE {
-			t.Logf("%s %q\n", tok, lit)
-			buf.WriteString(lit)
-		}
+		tokens = append(tokens, tok)
 	}
 
-	t.Logf("Full: %q\n", buf.String())
+	expected := []token{
+		CURLYOPEN,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		CURLYOPEN,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		STRING,
+		QUESTION,
+		NEWLINE,
+		WHITESPACE,
+		CURLYCLOSE,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		SQUAREOPEN,
+		CURLYOPEN,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		STRING,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		STRING,
+		NEWLINE,
+		WHITESPACE,
+		IDENT,
+		COLON,
+		WHITESPACE,
+		NUMBER,
+		QUESTION,
+		NEWLINE,
+		WHITESPACE,
+		CURLYCLOSE,
+		SQUARECLOSE,
+		NEWLINE,
+		CURLYCLOSE,
+		NEWLINE,
+	}
+
+	if !reflect.DeepEqual(expected, tokens) {
+		t.Errorf("unexpected tokens: expected %v but got %v\n", expected, tokens)
+	}
 
 }

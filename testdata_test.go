@@ -13,22 +13,22 @@ var WrittenCollectionSchema = `{
 `
 
 var WrittenCollectionType = Type{
-	Kind: KindObject,
+	Kind: Object,
 	Properties: map[string]*Type{
 		"author": &Type{
-			Kind: KindObject,
+			Kind: Object,
 			Properties: map[string]*Type{
-				"penName": &Type{Kind: KindString, Optional: true},
+				"penName": &Type{Kind: String, Optional: true},
 			},
 		},
 		"works": &Type{
-			Kind: KindArray,
+			Kind: Array,
 			Items: &Type{
-				Kind: KindObject,
+				Kind: Object,
 				Properties: map[string]*Type{
-					"title":     &Type{Kind: KindString},
-					"language":  &Type{Kind: KindString},
-					"pageCount": &Type{Kind: KindNumber, Optional: true},
+					"title":     &Type{Kind: String},
+					"language":  &Type{Kind: String},
+					"pageCount": &Type{Kind: Number, Optional: true},
 				},
 			},
 		},

@@ -2,7 +2,6 @@ package jstn
 
 import (
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -14,64 +13,64 @@ func TestParser(t *testing.T) {
 	}{
 		{
 			Schema: `string`,
-			Parsed: Type{Kind: KindString, Optional: false},
+			Parsed: Type{Kind: String, Optional: false},
 		},
 		{
 			Schema: `string?`,
-			Parsed: Type{Kind: KindString, Optional: true},
+			Parsed: Type{Kind: String, Optional: true},
 		},
 		{
 			Schema: `number`,
-			Parsed: Type{Kind: KindNumber, Optional: false},
+			Parsed: Type{Kind: Number, Optional: false},
 		},
 		{
 			Schema: `number?`,
-			Parsed: Type{Kind: KindNumber, Optional: true},
+			Parsed: Type{Kind: Number, Optional: true},
 		},
 		{
 			Schema: `boolean`,
-			Parsed: Type{Kind: KindBoolean, Optional: false},
+			Parsed: Type{Kind: Boolean, Optional: false},
 		},
 		{
 			Schema: `boolean?`,
-			Parsed: Type{Kind: KindBoolean, Optional: true},
+			Parsed: Type{Kind: Boolean, Optional: true},
 		},
 		{
 			Schema: `null`,
-			Parsed: Type{Kind: KindNull, Optional: false},
+			Parsed: Type{Kind: Null, Optional: false},
 		},
 		{
 			Schema: `null?`,
-			Parsed: Type{Kind: KindNull, Optional: true},
+			Parsed: Type{Kind: Null, Optional: true},
 		},
 		{
 			Schema: `[number]?`,
-			Parsed: Type{Kind: KindArray, Optional: true, Items: &Type{
-				Kind: KindNumber,
+			Parsed: Type{Kind: Array, Optional: true, Items: &Type{
+				Kind: Number,
 			}},
 		},
 		{
 			Schema: `[number?]`,
-			Parsed: Type{Kind: KindArray, Items: &Type{
-				Kind:     KindNumber,
+			Parsed: Type{Kind: Array, Items: &Type{
+				Kind:     Number,
 				Optional: true,
 			}},
 		},
 		{
 			Schema: `{key: string}`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{
-				"key": &Type{Kind: KindString},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{
+				"key": &Type{Kind: String},
 			}},
 		},
 		{
 			Schema: `{}`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{}},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{}},
 		},
 		{
 			Schema: `{name:string;age:number?}`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{
-				"name": &Type{Kind: KindString},
-				"age":  &Type{Kind: KindNumber, Optional: true},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{
+				"name": &Type{Kind: String},
+				"age":  &Type{Kind: Number, Optional: true},
 			}},
 		},
 		{
@@ -79,9 +78,9 @@ func TestParser(t *testing.T) {
 	name:string
 	age:number?
 }`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{
-				"name": &Type{Kind: KindString},
-				"age":  &Type{Kind: KindNumber, Optional: true},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{
+				"name": &Type{Kind: String},
+				"age":  &Type{Kind: Number, Optional: true},
 			}},
 		},
 		{
@@ -89,9 +88,9 @@ func TestParser(t *testing.T) {
 	name:string;
 	age:number?;
 }`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{
-				"name": &Type{Kind: KindString},
-				"age":  &Type{Kind: KindNumber, Optional: true},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{
+				"name": &Type{Kind: String},
+				"age":  &Type{Kind: Number, Optional: true},
 			}},
 		},
 		{
@@ -99,12 +98,12 @@ func TestParser(t *testing.T) {
      title:string
      year:     number?;
      classic:boolean;}]}`,
-			Parsed: Type{Kind: KindObject, Properties: map[string]*Type{
-				"author": &Type{Kind: KindString},
-				"works": &Type{Kind: KindArray, Items: &Type{Kind: KindObject, Properties: map[string]*Type{
-					"title":   &Type{Kind: KindString},
-					"year":    &Type{Kind: KindNumber, Optional: true},
-					"classic": &Type{Kind: KindBoolean},
+			Parsed: Type{Kind: Object, Properties: map[string]*Type{
+				"author": &Type{Kind: String},
+				"works": &Type{Kind: Array, Items: &Type{Kind: Object, Properties: map[string]*Type{
+					"title":   &Type{Kind: String},
+					"year":    &Type{Kind: Number, Optional: true},
+					"classic": &Type{Kind: Boolean},
 				}}},
 			}},
 		},
@@ -112,7 +111,7 @@ func TestParser(t *testing.T) {
 
 	for i, c := range cases {
 
-		typedef, err := NewParser(strings.NewReader(c.Schema)).Parse()
+		typedef, err := Parse(c.Schema)
 		if err != nil {
 			t.Fatalf("[case %d] failed to parse: %s\n", i, err)
 		}

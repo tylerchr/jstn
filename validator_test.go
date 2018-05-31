@@ -14,95 +14,95 @@ func TestValid(t *testing.T) {
 	}{
 		// A JSON string validates as a required string.
 		{
-			Type:     Type{Kind: KindString, Optional: false},
+			Type:     Type{Kind: String, Optional: false},
 			TestData: json.RawMessage(`"a string"`),
 			Valid:    true,
 		},
 
 		// An empty document validates as an optional string.
 		{
-			Type:     Type{Kind: KindString, Optional: true},
+			Type:     Type{Kind: String, Optional: true},
 			TestData: json.RawMessage(``),
 			Valid:    true,
 		},
 
 		// A JSON null validates as an empty string.
 		{
-			Type:     Type{Kind: KindString, Optional: true},
+			Type:     Type{Kind: String, Optional: true},
 			TestData: json.RawMessage(`null`),
 			Valid:    true,
 		},
 
 		// A JSON boolean does not validate as a required string.
 		{
-			Type:     Type{Kind: KindString, Optional: false},
+			Type:     Type{Kind: String, Optional: false},
 			TestData: json.RawMessage(`true`),
 			Valid:    false,
 		},
 
 		{
-			Type:     Type{Kind: KindNumber, Optional: false},
+			Type:     Type{Kind: Number, Optional: false},
 			TestData: json.RawMessage(`1`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindNumber, Optional: false},
+			Type:     Type{Kind: Number, Optional: false},
 			TestData: json.RawMessage(`-1`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindNumber, Optional: false},
+			Type:     Type{Kind: Number, Optional: false},
 			TestData: json.RawMessage(`3.1415`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindBoolean, Optional: false},
+			Type:     Type{Kind: Boolean, Optional: false},
 			TestData: json.RawMessage(`true`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindBoolean, Optional: false},
+			Type:     Type{Kind: Boolean, Optional: false},
 			TestData: json.RawMessage(`false`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindBoolean, Optional: true},
+			Type:     Type{Kind: Boolean, Optional: true},
 			TestData: json.RawMessage(``),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindBoolean, Optional: false},
+			Type:     Type{Kind: Boolean, Optional: false},
 			TestData: json.RawMessage(`3.1415`),
 			Valid:    false,
 		},
 
 		{
-			Type:     Type{Kind: KindNull, Optional: false},
+			Type:     Type{Kind: Null, Optional: false},
 			TestData: json.RawMessage(`null`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindNull, Optional: true},
+			Type:     Type{Kind: Null, Optional: true},
 			TestData: json.RawMessage(`null`),
 			Valid:    true,
 		},
 
 		{
-			Type:     Type{Kind: KindNull, Optional: true},
+			Type:     Type{Kind: Null, Optional: true},
 			TestData: json.RawMessage(`"null"`),
 			Valid:    false,
 		},
 
 		{
-			Type: Type{Kind: KindArray, Optional: false, Items: &Type{
-				Kind:     KindNumber,
+			Type: Type{Kind: Array, Optional: false, Items: &Type{
+				Kind:     Number,
 				Optional: false,
 			}},
 			TestData: json.RawMessage(`[1, 2, 3, null]`),
@@ -110,8 +110,8 @@ func TestValid(t *testing.T) {
 		},
 
 		{
-			Type: Type{Kind: KindArray, Optional: false, Items: &Type{
-				Kind:     KindNumber,
+			Type: Type{Kind: Array, Optional: false, Items: &Type{
+				Kind:     Number,
 				Optional: true,
 			}},
 			TestData: json.RawMessage(`[1, 2, 3, null]`),
@@ -119,48 +119,48 @@ func TestValid(t *testing.T) {
 		},
 
 		{
-			Type: Type{Kind: KindObject, Optional: false, Properties: map[string]*Type{
-				"foo": &Type{Kind: KindNull},
-				"bar": &Type{Kind: KindNumber},
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
 			}},
 			TestData: json.RawMessage(`{"foo":null,"bar":123}`),
 			Valid:    true,
 		},
 
 		{
-			Type: Type{Kind: KindObject, Optional: false, Properties: map[string]*Type{
-				"foo": &Type{Kind: KindNull},
-				"bar": &Type{Kind: KindNumber},
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
 			}},
 			TestData: json.RawMessage(`{"foo":null,"bar":123,"baz":"hack"}`),
 			Valid:    false,
 		},
 
 		{
-			Type: Type{Kind: KindObject, Optional: false, Properties: map[string]*Type{
-				"foo": &Type{Kind: KindNull},
-				"bar": &Type{Kind: KindNumber},
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
 			}},
 			TestData: json.RawMessage(`{"foo":null}`),
 			Valid:    false,
 		},
 
 		{
-			Type: Type{Kind: KindObject, Optional: false, Properties: map[string]*Type{
-				"foo": &Type{Kind: KindNull},
-				"bar": &Type{Kind: KindNumber},
-				"baz": &Type{Kind: KindString},
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: String},
 			}},
 			TestData: json.RawMessage(`{"foo":null,"bar":123,"baz":"hack"}`),
 			Valid:    true,
 		},
 
 		{
-			Type: Type{Kind: KindObject, Optional: false, Properties: map[string]*Type{
-				"foo": &Type{Kind: KindObject, Properties: map[string]*Type{
-					"length": &Type{Kind: KindNumber},
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
 				}},
-				"bar": &Type{Kind: KindNumber},
+				"bar": &Type{Kind: Number},
 			}},
 			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123}`),
 			Valid:    true,
@@ -199,7 +199,9 @@ func TestValidAPI(t *testing.T) {
 	]
 }`))
 
-	t.Logf("Valid: %t\n", ok)
+	if !ok {
+		t.Error("unexpected invalidation failure")
+	}
 
 }
 

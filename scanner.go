@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type Token int
+type token int
 
 var eof = rune(0)
 
 const (
 	// Control
-	ILLEGAL Token = iota
+	ILLEGAL token = iota
 	EOF
 	WHITESPACE
 	NEWLINE
@@ -21,7 +21,13 @@ const (
 	// Literals
 	IDENT
 
-	// Misc characters
+	// Known identifiers
+	STRING  // string
+	NUMBER  // number
+	BOOLEAN // boolean
+	NULL    // null
+
+	// Structural characters
 	CURLYOPEN   // {
 	CURLYCLOSE  // }
 	SQUAREOPEN  // ]
@@ -29,19 +35,13 @@ const (
 	COLON       // :
 	SEMICOLON   // ;
 	QUESTION    // ?
-
-	// Known types
-	STRING  // string
-	NUMBER  // number
-	BOOLEAN // boolean
-	NULL    // null
 )
 
-func (t Token) String() string {
-	return Tokens[t]
+func (t token) String() string {
+	return tokens[t]
 }
 
-var Tokens = map[Token]string{
+var tokens = map[token]string{
 	ILLEGAL:     "ILLEGAL",
 	EOF:         "EOF",
 	WHITESPACE:  "WHITESPACE",
@@ -76,15 +76,15 @@ func isDigit(ch rune) bool {
 	return ch >= '0' && ch <= '9'
 }
 
-type Scanner struct {
+type scanner struct {
 	r *bufio.Reader
 }
 
-func NewScanner(r io.Reader) *Scanner {
-	return &Scanner{r: bufio.NewReader(r)}
+func newScanner(r io.Reader) *scanner {
+	return &scanner{r: bufio.NewReader(r)}
 }
 
-func (s *Scanner) read() rune {
+func (s *scanner) read() rune {
 	ch, _, err := s.r.ReadRune()
 	if err != nil {
 		return eof
@@ -92,9 +92,9 @@ func (s *Scanner) read() rune {
 	return ch
 }
 
-func (s *Scanner) unread() { _ = s.r.UnreadRune() }
+func (s *scanner) unread() { _ = s.r.UnreadRune() }
 
-func (s *Scanner) Scan() (tok Token, lit string) {
+func (s *scanner) Scan() (tok token, lit string) {
 
 	ch := s.read()
 
@@ -115,7 +115,7 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 		return EOF, ""
 	}
 
-	chars := map[rune]Token{
+	chars := map[rune]token{
 		'{': CURLYOPEN,
 		'}': CURLYCLOSE,
 		'[': SQUAREOPEN,
@@ -125,14 +125,14 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 		'?': QUESTION,
 	}
 
-	if token, ok := chars[ch]; ok {
-		return token, string(ch)
+	if tok, ok := chars[ch]; ok {
+		return tok, string(ch)
 	}
 
 	return ILLEGAL, string(ch)
 }
 
-func (s *Scanner) scanRunes(t Token, matcher func(rune) bool) (tok Token, lit string) {
+func (s *scanner) scanRunes(t token, matcher func(rune) bool) (tok token, lit string) {
 
 	var buf bytes.Buffer
 
@@ -151,19 +151,19 @@ func (s *Scanner) scanRunes(t Token, matcher func(rune) bool) (tok Token, lit st
 
 }
 
-func (s *Scanner) scanWhitespace() (tok Token, lit string) {
+func (s *scanner) scanWhitespace() (tok token, lit string) {
 	return s.scanRunes(WHITESPACE, func(r rune) bool {
 		return isWhitespace(r)
 	})
 }
 
-func (s *Scanner) scanNewline() (tok Token, lit string) {
+func (s *scanner) scanNewline() (tok token, lit string) {
 	return s.scanRunes(NEWLINE, func(r rune) bool {
 		return isNewline(r)
 	})
 }
 
-func (s *Scanner) scanIdent() (tok Token, lit string) {
+func (s *scanner) scanIdent() (tok token, lit string) {
 
 	tok, lit = s.scanRunes(IDENT, func(r rune) bool {
 		return isLetter(r) || isDigit(r) || r == '_'

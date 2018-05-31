@@ -7,24 +7,8 @@ import (
 	"log"
 )
 
-type Kind int
-
-const (
-	KindString Kind = iota
-	KindNumber
-	KindBoolean
-	KindNull
-	KindObject
-	KindArray
-)
-
-type Type struct {
-	Kind       Kind
-	Optional   bool
-	Properties map[string]*Type // Only for Objects
-	Items      *Type            // Only for Arrays
-}
-
+// Valid indicates whether the JSON document in is considered valid with
+// respect to the JSTN structure t.
 func Valid(t Type, in json.RawMessage) bool {
 	d := json.NewDecoder(bytes.NewReader(in))
 	d.UseNumber()
@@ -47,27 +31,27 @@ func Valid(t Type, in json.RawMessage) bool {
 func valid(d *json.Decoder, t Type) bool {
 
 	switch t.Kind {
-	case KindString:
+	case String:
 		if ok := validString(d, t); !ok {
 			return false
 		}
-	case KindNumber:
+	case Number:
 		if ok := validNumber(d, t); !ok {
 			return false
 		}
-	case KindBoolean:
+	case Boolean:
 		if ok := validBoolean(d, t); !ok {
 			return false
 		}
-	case KindNull:
+	case Null:
 		if ok := validNull(d, t); !ok {
 			return false
 		}
-	case KindArray:
+	case Array:
 		if ok := validArray(d, t); !ok {
 			return false
 		}
-	case KindObject:
+	case Object:
 		if ok := validObject(d, t); !ok {
 			return false
 		}

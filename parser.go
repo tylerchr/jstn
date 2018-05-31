@@ -1,8 +1,8 @@
+// Package jstn implements a reference parser and validator for JSON Type Notation.
 package jstn
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"strings"
 )
@@ -16,24 +16,21 @@ func MustParse(schema string) Type {
 }
 
 func Parse(schema string) (Type, error) {
-	p := NewParser(strings.NewReader(schema))
+	r := strings.NewReader(schema)
+	p := &parser{s: newScanner(r)}
 	return p.Parse()
 }
 
-type Parser struct {
-	s   *Scanner
+type parser struct {
+	s   *scanner
 	buf struct {
-		tok Token
+		tok token
 		lit string
 		n   int
 	}
 }
 
-func NewParser(r io.Reader) *Parser {
-	return &Parser{s: NewScanner(r)}
-}
-
-func (p *Parser) scan() (tok Token, lit string) {
+func (p *parser) scan() (tok token, lit string) {
 	if p.buf.n != 0 {
 		p.buf.n = 0
 		return p.buf.tok, p.buf.lit
@@ -43,9 +40,9 @@ func (p *Parser) scan() (tok Token, lit string) {
 	return
 }
 
-func (p *Parser) unscan() { p.buf.n = 1 }
+func (p *parser) unscan() { p.buf.n = 1 }
 
-func (p *Parser) scanIgnoreWhitespace(ignoreNewlines bool) (tok Token, lit string) {
+func (p *parser) scanIgnoreWhitespace(ignoreNewlines bool) (tok token, lit string) {
 	tok, lit = p.scan()
 	for tok == WHITESPACE || (ignoreNewlines && tok == NEWLINE) {
 		tok, lit = p.scan()
@@ -53,11 +50,11 @@ func (p *Parser) scanIgnoreWhitespace(ignoreNewlines bool) (tok Token, lit strin
 	return
 }
 
-func (p *Parser) Parse() (Type, error) {
+func (p *parser) Parse() (Type, error) {
 	return p.parseType()
 }
 
-func (p *Parser) parseType() (Type, error) {
+func (p *parser) parseType() (Type, error) {
 	t, err := p.parseTypeDecl()
 	if err != nil {
 		return t, err
@@ -74,19 +71,19 @@ func (p *Parser) parseType() (Type, error) {
 	return t, nil
 }
 
-func (p *Parser) parseTypeDecl() (Type, error) {
+func (p *parser) parseTypeDecl() (Type, error) {
 
 	tok, _ := p.scanIgnoreWhitespace(true)
 
 	switch tok {
 	case STRING:
-		return Type{Kind: KindString}, nil
+		return Type{Kind: String}, nil
 	case NUMBER:
-		return Type{Kind: KindNumber}, nil
+		return Type{Kind: Number}, nil
 	case BOOLEAN:
-		return Type{Kind: KindBoolean}, nil
+		return Type{Kind: Boolean}, nil
 	case NULL:
-		return Type{Kind: KindNull}, nil
+		return Type{Kind: Null}, nil
 	case SQUAREOPEN:
 		p.unscan()
 		return p.parseArray()
@@ -98,7 +95,7 @@ func (p *Parser) parseTypeDecl() (Type, error) {
 	}
 }
 
-func (p *Parser) parseArray() (Type, error) {
+func (p *parser) parseArray() (Type, error) {
 
 	// parse the opening brace
 	tok, _ := p.scanIgnoreWhitespace(true)
@@ -118,12 +115,12 @@ func (p *Parser) parseArray() (Type, error) {
 		return Type{}, fmt.Errorf("unexpected token %s", tok.String())
 	}
 
-	return Type{Kind: KindArray, Items: &t}, nil
+	return Type{Kind: Array, Items: &t}, nil
 }
 
-func (p *Parser) parseObject() (Type, error) {
+func (p *parser) parseObject() (Type, error) {
 
-	var tok Token
+	var tok token
 	var lit string
 
 	// parse the opening brace
@@ -191,5 +188,5 @@ func (p *Parser) parseObject() (Type, error) {
 		return Type{}, fmt.Errorf("unexpected token %s", tok.String())
 	}
 
-	return Type{Kind: KindObject, Properties: props}, nil
+	return Type{Kind: Object, Properties: props}, nil
 }
