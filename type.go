@@ -10,6 +10,7 @@ const (
 	Null
 	Object
 	Array
+	Any
 )
 
 type Type struct {

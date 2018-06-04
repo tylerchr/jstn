@@ -26,6 +26,7 @@ const (
 	NUMBER  // number
 	BOOLEAN // boolean
 	NULL    // null
+	ANY     // any
 
 	// Structural characters
 	CURLYOPEN   // {
@@ -58,6 +59,7 @@ var tokens = map[token]string{
 	NUMBER:      "NUMBER",
 	BOOLEAN:     "BOOLEAN",
 	NULL:        "NULL",
+	ANY:         "ANY",
 }
 
 func isWhitespace(ch rune) bool {
@@ -178,6 +180,8 @@ func (s *scanner) scanIdent() (tok token, lit string) {
 		return BOOLEAN, lit
 	case "null":
 		return NULL, lit
+	case "any":
+		return ANY, lit
 	}
 
 	return tok, lit
