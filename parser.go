@@ -1,4 +1,4 @@
-// Package jstn implements a reference parser and validator for JSON Type Notation.
+// Package jstn implements a reference parser, validator, and generator for JSON Type Notation.
 package jstn
 
 import (
