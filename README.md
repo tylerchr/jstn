@@ -1,4 +1,4 @@
-# `jstn` [![GoDoc](https://godoc.org/github.com/tylerchr/jstn?status.svg)](https://godoc.org/github.com/tylerchr/jstn)
+# `jstn` [![GoDoc](https://godoc.org/github.com/tylerchr/jstn?status.svg)](https://godoc.org/github.com/tylerchr/jstn) [![Build Status](https://travis-ci.org/tylerchr/jstn.svg?branch=master)](https://travis-ci.org/tylerchr/jstn) [![Coverage Status](https://coveralls.io/repos/github/tylerchr/jstn/badge.svg?branch=travis)](https://coveralls.io/github/tylerchr/jstn?branch=travis)
 
 Package `jstn` implements a reference parser and validator for JSON Type Notation.
 
