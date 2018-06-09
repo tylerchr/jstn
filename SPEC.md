@@ -28,7 +28,7 @@ described in [RFC5234](https://tools.ietf.org/html/rfc5234).
 ## JSTN Grammar
 
 A JSTN text is a sequence of tokens. The set of tokens includes seven
-structural characters, identifiers, and four specific identifier literals.
+structural characters, identifiers, and five specific identifier literals.
 
 ```
    JSTN-text = ws type ws
@@ -69,11 +69,11 @@ structural characters.
 
 ## Types
 
-A JSTN type MUST be an object, array, or one of the following four type
+A JSTN type MUST be an object, array, or one of the following five type
 literals:
 
 ```
-   string number boolean null
+   string number boolean null any
 ```
 
 The literal names MUST be lowercase. No other literal names are allowed.
@@ -93,6 +93,8 @@ literal with a question mark character.
    boolean          = %x62.6f.6f.6c.65.61.6e   ; boolean
 
    null             = %x6e.75.6c.6c            ; null
+
+   any              = %x61.6e.79               ; any
 ```
 
 ## Objects
@@ -129,13 +131,30 @@ the type declaration for all elements contained within a validating JSON array.
 This implies that while it is the case for JSON arrays described in RFC 7159
 that
 
-	"There is no requirement that the values in an array be of the same type."
+  "There is no requirement that the values in an array be of the same type."
 
-such texts are not representable by JSTN.
+such texts are not representable by JSTN, except through the usage of the
+wildcard `any` type as the array's inner type declaration.
 
 ```
    array = begin-array type-declaration end-array
 ```
+
+## The `any` type
+
+JSTN allows for the specification of a property with a type key of `any`. This
+designates the existence of the given property, without making any claims about that
+property's actual type. That is, a property declared with the type indicator of `any` may
+be used to represent any valid JSON value—be it an object, array, string, number, boolean,
+or null.
+
+Note that properties declared with the `any` type may also be designated as optional by
+suffixing the type literal with the optional (`?`) token. This behaves consistently with
+the usage of the optional token when appended to any other type. The value represented
+by the `any?` type may appear in the JSON document as any valid JSON type, or may be
+omitted. Contrast that with a value represented by the non-optional `any` type, which
+may appear in the JSON document as either an object, array, string, number, boolean, or null
+value, but must not be omitted.
 
 ## Parsers
 
@@ -166,21 +185,46 @@ to be valid against a JSTN text if the following conditions all apply:
 
 1. The JSON value is of the same type as the JSTN type declaration. This
    is applied recursively, such that a JSON object's properties must match
-   the type of the same property at the same location in the JSTN type.
+   the type of the same property at the same location in the JSTN type. A JSTN
+   validator MUST fail validation if it encounters any values in the JSON
+   document that do not match their declared JSTN type.
 
 2. All non-optional types in the JSTN type declaration are present in the
-   JSON document.
+   JSON document. A JSTN validator MUST fail validation upon detecting that
+   a non-optional property is not present in the JSON document.
 
-3. No object properties exist in the JSON document that are not declared in
-   the JSTN type declaration.
-
-4. All optional types in the JSTN type declarations correspond either to
+3. All optional types in the JSTN type declarations correspond either to
    (1) a value in the JSON document with a JSON type matching the JSTN type
    preceding the optional token for that type, (2) a JSON null value, or
    (3) in the case of object properties, that property's lack of presence.
 
 A JSON document that does not satisfy these conditions with respect to a JSTN
 text MUST NOT be considered valid with respect to that JSTN text.
+
+### Strict Mode Validation
+
+In addition to the standard validation conditions, A JSTN validator MAY choose to
+offer an additional "strict mode" validator implementation. A strict JSTN validator
+accepts a JSTN type declaration and a JSON text, enforces all of the validation
+criteria as listed for a standard JSTN validator, and also validates the
+JSON document against the following _additional_ criteria:
+
+4. No object properties exist in the JSON document that are not declared in
+   the JSTN type declaration text. A JSTN validator in strict mode MUST fail
+   validation if properties are found in the JSON document that are not declared
+   in the corresponding JSTN text.
+
+5. The JSON document does not contain any properties that are represented by the
+   JSTN text with an `any` or `any?` type. A JSTN validator in strict mode MUST
+   fail upon encountering a JSON value that is declared in the JSTN text as having
+   a type of `any` or `any?`.
+
+A JSON document that does not satisfy these additional "strict mode" conditions with
+respect to a JSTN text MAY be considered _invalid by "Strict Mode" JSTN standards_
+with respect to that JSTN text. If the JSON document otherwise satisfies all of the
+standard JSTN validation conditions, and only fails validation due to strict mode
+conditions, usages of the validator SHOULD clarify that the document is considered
+invalid only by _strict mode_ JSTN standards.
 
 ## Examples
 
@@ -197,7 +241,7 @@ This is a JSTN object represented in pretty format:
                 Url:    string
                 Height: number
                 Width:  number
-            },
+            }
             Animated: boolean?
             IDs: [number]
         }
@@ -206,7 +250,7 @@ This is a JSTN object represented in pretty format:
 
 It describes the type of a JSON object whose Image member is an object whose
 Thumbnail member is an object, whose IDs member is an array of numbers, and
-whose Animated member is an optional boolean. The first example in RFC 7159
+whose Animated member is an optional boolean. The [first example in RFC 7159](https://tools.ietf.org/html/rfc7159#section-13)
 is such an object.
 
 Here is the same JSTN object represented in concise format:
@@ -231,8 +275,34 @@ This is a JSTN array represented in pretty format:
 	}]
 ```
 
-The second example in RFC 7159 is considered valid with respect to this JSTN
+The [second example in RFC 7159](https://tools.ietf.org/html/rfc7159#section-13) is considered valid with respect to this JSTN
 type declaration.
+
+
+Here is an example of a type declaration with more complexity:
+
+```
+   {
+      userId: string
+      firstName: string
+      middleName: string?
+      lastName: string
+      emailAddress: string
+      address: {
+         streetAddr: string
+         apartment: string?
+         city: string
+         state: string
+         country: string?
+      }?
+      userMetadata: {
+         createdTimestamp: number
+         lastLoginIP: string?
+         loginHistory: [any]?
+         userProfileData: any?
+      }
+   }
+```
 
 Here is an unconventional JSTN text that mixes different object delineators and
 uses unorthodox whitespace:

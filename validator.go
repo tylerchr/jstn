@@ -14,7 +14,7 @@ func Valid(t Type, in json.RawMessage) bool {
 	d.UseNumber()
 
 	// assert that the next json object matches the type
-	if ok := valid(d, t); !ok {
+	if ok := valid(d, t, false); !ok {
 		return false
 	}
 
@@ -26,9 +26,28 @@ func Valid(t Type, in json.RawMessage) bool {
 	return true
 }
 
-// valid indicates whether the next JSON value in the Decoder has the structure
+// StrictlyValid indicates whether the JSON document in is considered valid with
+// respect to the JSTN structure t by strict standards.
+func StrictlyValid(t Type, in json.RawMessage) bool {
+	d := json.NewDecoder(bytes.NewReader(in))
+	d.UseNumber()
+
+	// assert that the next json object matches the type
+	if ok := valid(d, t, true); !ok {
+		return false
+	}
+
+	// assert that all data has been parsed
+	if _, err := d.Token(); err != io.EOF {
+		return false
+	}
+
+	return true
+}
+
+// valid reads in a json value from the json Decoder, and returns false when has the structure
 // described by t.
-func valid(d *json.Decoder, t Type) bool {
+func valid(d *json.Decoder, t Type, strictMode bool) bool {
 
 	switch t.Kind {
 	case String:
@@ -48,11 +67,15 @@ func valid(d *json.Decoder, t Type) bool {
 			return false
 		}
 	case Array:
-		if ok := validArray(d, t); !ok {
+		if ok := validArray(d, t, strictMode); !ok {
 			return false
 		}
 	case Object:
-		if ok := validObject(d, t); !ok {
+		if ok := validObject(d, t, strictMode); !ok {
+			return false
+		}
+	case Any:
+		if ok := validAny(d, t, strictMode); !ok {
 			return false
 		}
 	default:
@@ -176,7 +199,7 @@ func validNull(d *json.Decoder, t Type) bool {
 }
 
 // validArray indicates whether the next token in the JSON is a valid array.
-func validArray(d *json.Decoder, t Type) bool {
+func validArray(d *json.Decoder, t Type, strictMode bool) bool {
 
 	tok, err := d.Token()
 	if err != nil {
@@ -197,7 +220,7 @@ func validArray(d *json.Decoder, t Type) bool {
 	defer d.Token()
 
 	for d.More() {
-		if ok := valid(d, *t.Items); !ok {
+		if ok := valid(d, *t.Items, strictMode); !ok {
 			log.Println("validation failed: array: invalid sub-element")
 			return false
 		}
@@ -208,7 +231,7 @@ func validArray(d *json.Decoder, t Type) bool {
 }
 
 // validObject indicates whether the next token in the JSON is a valid object.
-func validObject(d *json.Decoder, t Type) bool {
+func validObject(d *json.Decoder, t Type, strictMode bool) bool {
 
 	tok, err := d.Token()
 	if err != nil {
@@ -250,17 +273,23 @@ func validObject(d *json.Decoder, t Type) bool {
 			return false
 		}
 
-		// look up the type for this property
+		// check whether this property was declared
 		propType, ok := t.Properties[keyTokStr]
 		if !ok {
-			log.Printf("validation failed: object: contains undeclared property %q\n", keyTokStr)
-			return false
+			if strictMode {
+				log.Printf("validation failed: object: contains undeclared property %q\n", keyTokStr)
+				return false
+			} else {
+				propType = &Type{
+					Kind: Any,
+				}
+			}
 		}
 
 		// mark this property as visited
 		delete(necessaryProps, keyTokStr)
 
-		if ok := valid(d, *propType); !ok {
+		if ok := valid(d, *propType, strictMode); !ok {
 			log.Println("validation failed: object: invalid sub-element")
 			return false
 		}
@@ -275,5 +304,51 @@ func validObject(d *json.Decoder, t Type) bool {
 	}
 
 	return true
+
+}
+
+// validAny indicates whether the next token in the JSON is any valid JSON value.
+func validAny(d *json.Decoder, t Type, strictMode bool) bool {
+	tok, err := d.Token()
+	if err != nil {
+		if t.Optional && err == io.EOF {
+			// no token at all, but it's optional so that's okay
+			return true
+		}
+		log.Printf("validation failed: any: got error: %s\n", err)
+		return false
+	}
+
+	if strictMode {
+		return false
+	}
+
+	switch tok.(type) {
+	case bool:
+		return true
+	case string:
+		return true
+	case json.Number:
+		return true
+	case nil:
+		return true
+	case json.Delim:
+		if tok == json.Delim('{') {
+			for d.More() {
+				d.Token()                                // eat the key
+				validAny(d, Type{Kind: Any}, strictMode) // read the value
+			}
+			d.Token() // consume the ending '}' delimiter
+		} else if tok == json.Delim('[') {
+			for d.More() {
+				validAny(d, Type{Kind: Any}, strictMode)
+			}
+			d.Token() // consume the ending ']' delimiter
+		}
+		return true
+	default:
+		log.Printf("validation failed: any: unexpected type %T: %v\n", tok, tok)
+		return false
+	}
 
 }

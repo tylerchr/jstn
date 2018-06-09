@@ -127,13 +127,14 @@ func TestValid(t *testing.T) {
 			Valid:    true,
 		},
 
+		// shouldn't fail with an extra property, since it's not Strict Mode
 		{
 			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
 				"foo": &Type{Kind: Null},
 				"bar": &Type{Kind: Number},
 			}},
 			TestData: json.RawMessage(`{"foo":null,"bar":123,"baz":"hack"}`),
-			Valid:    false,
+			Valid:    true,
 		},
 
 		{
@@ -165,11 +166,200 @@ func TestValid(t *testing.T) {
 			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123}`),
 			Valid:    true,
 		},
+
+		// Expects empty object, gets object with properties
+		{
+			Type:     Type{Kind: Object, Optional: false, Properties: map[string]*Type{}},
+			TestData: json.RawMessage(`{"foo":null,"bar":123,"extra":"abc"}`),
+			Valid:    true,
+		},
+
+		// Allows objects to have undeclared properties
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
+			}},
+			TestData: json.RawMessage(`{"foo":null,"bar":123,"extra":"abc"}`),
+			Valid:    true,
+		},
+
+		// Allows an array containing objects to have undeclared properties within the inner objects
+		{
+			Type: Type{Kind: Array, Optional: false, Items: &Type{
+				Kind:     Object,
+				Optional: false,
+				Properties: map[string]*Type{
+					"name": &Type{Kind: String},
+				},
+			}},
+			TestData: json.RawMessage(`[{"name":"Harry"},{"name":"Hermione"},{"name":"Hagrid","size":"massive"}]`),
+			Valid:    true,
+		},
+
+		// Allows undeclared fields in multiple object nesting levels
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3,"width":4},"bar":123,"baz":null}`),
+			Valid:    true,
+		},
+
+		// Allows the usage of 'any' type
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Any},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3,"width":4},"bar":123,"baz":{"thing":1,"stuff":[1,2,"a","b"]}}`),
+			Valid:    true,
+		},
 	}
 
 	for i, c := range cases {
 		if ok := Valid(c.Type, c.TestData); ok != c.Valid {
 			t.Errorf("[case %d] unexpected result for Valid: expected %t but got %t\n", i, c.Valid, ok)
+		}
+	}
+
+}
+
+func TestStrictlyValid(t *testing.T) {
+
+	cases := []struct {
+		Type     Type
+		TestData json.RawMessage
+		Valid    bool
+	}{
+
+		// Expects empty object, gets object with properties
+		{
+			Type:     Type{Kind: Object, Optional: false, Properties: map[string]*Type{}},
+			TestData: json.RawMessage(`{"foo":null,"bar":123,"extra":"abc"}`),
+			Valid:    false,
+		},
+
+		// Expects object with two properties, gets object with those properties and more
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
+			}},
+			TestData: json.RawMessage(`{"foo":null,"bar":123,"extra":"abc"}`),
+			Valid:    false,
+		},
+
+		// Expects object with two properties, gets object with those properties and an extra property that is null
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Null},
+				"bar": &Type{Kind: Number},
+			}},
+			TestData: json.RawMessage(`{"foo":null,"bar":123,"extra":null}`),
+			Valid:    false,
+		},
+
+		// Expects array of objects with a single "name" property, but one array item has an extra "address" property
+		{
+			Type: Type{Kind: Array, Optional: false, Items: &Type{
+				Kind:     Object,
+				Optional: false,
+				Properties: map[string]*Type{
+					"name": &Type{Kind: String},
+				},
+			}},
+			TestData: json.RawMessage(`[{"name":"Harry"},{"name":"Hermione"},{"name":"Hagrid","size":"massive"}]`),
+			Valid:    false,
+		},
+
+		// Rejects undeclared fields in nested objects levels
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3,"width":4},"bar":123}`),
+			Valid:    false,
+		},
+
+		// Rejects the usage of the 'any' type
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Any},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123,"baz":1}`),
+			Valid:    false,
+		},
+
+		// Rejects the usage of the 'any?' type, when the value is present
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Any, Optional: true},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123,"baz":1}`),
+			Valid:    false,
+		},
+
+		// Allows the usage of the 'any?' type, when the value is absent
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Any, Optional: true},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123}`),
+			Valid:    true,
+		},
+
+		// Rejects the usage of an array containing the 'any' type, if the array is non-empty
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Array, Items: &Type{Kind: Any}},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123,"baz":[1,2,3]}`),
+			Valid:    false,
+		},
+
+		// Allows the usage of an array containing the 'any' type, if the array is empty
+		{
+			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
+				"foo": &Type{Kind: Object, Properties: map[string]*Type{
+					"length": &Type{Kind: Number},
+				}},
+				"bar": &Type{Kind: Number},
+				"baz": &Type{Kind: Array, Items: &Type{Kind: Any}},
+			}},
+			TestData: json.RawMessage(`{"foo":{"length":3},"bar":123,"baz":[]}`),
+			Valid:    true,
+		},
+	}
+
+	for i, c := range cases {
+		if ok := StrictlyValid(c.Type, c.TestData); ok != c.Valid {
+			t.Errorf("[case %d] unexpected result for StrictlyValid: expected %t but got %t\n", i, c.Valid, ok)
 		}
 	}
 
