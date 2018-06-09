@@ -97,6 +97,20 @@ literal with a question mark character.
    any              = %x61.6e.79               ; any
 ```
 
+## Any
+
+The "any" type literal may be used in a JSTN test as a wildcard. While the string, number,
+boolean, and null literals indicate the presence of a JSON value with that respective type,
+the "any" literal merely indicates the presence of a JSON value of any type. That is, a JSTN
+type of "any" may represent a JSON object, array, string, number, boolean, or null value.
+
+An "any" literal does not receive any special syntactic treatment, and MUST be parsed just
+like all other literals. For example, an `any` type may also be designated as optional by
+appending the value-optional token, with behavior consistent with that of the value-optional
+token appended to any other type. That is, the JSTN type "any" indicates the presence of a
+valid JSON value, while "any?" indicates that if a JSON value is present, it must be a JSON
+value (a very weak claim indeed!).
+
 ## Objects
 
 An object structure is represented as a pair of curly brackets surrounding zero
@@ -140,22 +154,6 @@ wildcard `any` type as the array's inner type declaration.
    array = begin-array type-declaration end-array
 ```
 
-## The `any` type
-
-JSTN allows for the specification of a property with a type key of `any`. This
-designates the existence of the given property, without making any claims about that
-property's actual type. That is, a property declared with the type indicator of `any` may
-be used to represent any valid JSON value—be it an object, array, string, number, boolean,
-or null.
-
-Note that properties declared with the `any` type may also be designated as optional by
-suffixing the type literal with the optional (`?`) token. This behaves consistently with
-the usage of the optional token when appended to any other type. The value represented
-by the `any?` type may appear in the JSON document as any valid JSON type, or may be
-omitted. Contrast that with a value represented by the non-optional `any` type, which
-may appear in the JSON document as either an object, array, string, number, boolean, or null
-value, but must not be omitted.
-
 ## Parsers
 
 A JSTN parser transforms a JSTN text into another representation. A JSTN
@@ -185,13 +183,10 @@ to be valid against a JSTN text if the following conditions all apply:
 
 1. The JSON value is of the same type as the JSTN type declaration. This
    is applied recursively, such that a JSON object's properties must match
-   the type of the same property at the same location in the JSTN type. A JSTN
-   validator MUST fail validation if it encounters any values in the JSON
-   document that do not match their declared JSTN type.
+   the type of the same property at the same location in the JSTN type.
 
 2. All non-optional types in the JSTN type declaration are present in the
-   JSON document. A JSTN validator MUST fail validation upon detecting that
-   a non-optional property is not present in the JSON document.
+   JSON document.
 
 3. All optional types in the JSTN type declarations correspond either to
    (1) a value in the JSON document with a JSON type matching the JSTN type
@@ -199,32 +194,37 @@ to be valid against a JSTN text if the following conditions all apply:
    (3) in the case of object properties, that property's lack of presence.
 
 A JSON document that does not satisfy these conditions with respect to a JSTN
-text MUST NOT be considered valid with respect to that JSTN text.
+text MUST NOT be considered valid with respect to that JSTN text, and a JSTN
+validator MUST indicate a validation failure.
 
-### Strict Mode Validation
+A JSON validator MUST implement support for determining whether a JSON
+document is valid with respect to a JSTN text.
 
-In addition to the standard validation conditions, A JSTN validator MAY choose to
-offer an additional "strict mode" validator implementation. A strict JSTN validator
-accepts a JSTN type declaration and a JSON text, enforces all of the validation
-criteria as listed for a standard JSTN validator, and also validates the
-JSON document against the following _additional_ criteria:
+### Strict Mode
 
-4. No object properties exist in the JSON document that are not declared in
-   the JSTN type declaration text. A JSTN validator in strict mode MUST fail
-   validation if properties are found in the JSON document that are not declared
-   in the corresponding JSTN text.
+A JSON text is said to be strictly valid with respect to a JSTN text if the
+following conditions all apply, and a JSTN validator that checks these conditions
+is said to run in strict mode:
 
-5. The JSON document does not contain any properties that are represented by the
-   JSTN text with an `any` or `any?` type. A JSTN validator in strict mode MUST
-   fail upon encountering a JSON value that is declared in the JSTN text as having
-   a type of `any` or `any?`.
+1. The JSON text is valid with respect to the JSTN type declaration.
 
-A JSON document that does not satisfy these additional "strict mode" conditions with
-respect to a JSTN text MAY be considered _invalid by "Strict Mode" JSTN standards_
-with respect to that JSTN text. If the JSON document otherwise satisfies all of the
-standard JSTN validation conditions, and only fails validation due to strict mode
-conditions, usages of the validator SHOULD clarify that the document is considered
-invalid only by _strict mode_ JSTN standards.
+2. No object properties exist in the JSON document that are not declared in
+   the JSTN type declaration.
+
+3. The JSON document does not contain any values that are represented in the
+   JSTN text with an `any` or `any?` type.
+
+A JSON document that does not satisfy these stricter conditions with respect to a
+JSTN text MUST NOT be considered strictly valid, and a JSTN validator in strict
+mode MUST indicate a validation failure.
+
+A JSTN validator SHOULD implement support for determining whether a JSON document
+is strictly valid with respect to a JSTN text. If a JSTN validator implements such
+a function, it MUST behave according to these criteria.
+
+If the JSON document is valid but not strictly valid with respect to the JSTN text,
+a JSTN validator with support for strict validity SHOULD clarify that the JSON document
+is considered invalid only by strict standards.
 
 ## Examples
 
