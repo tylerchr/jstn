@@ -150,10 +150,20 @@ to the JSTN grammar.
 A JSTN generator SHOULD provide mechanisms for generating the JSTN text in both
 concise and pretty formats. The concise format omits all newlines (so object
 pairs must be delineated by semicolons) but MAY include horizontal whitespace.
-The pretty format includes newline characters (1) after each begin-object token
-and (2) both prior to and after each end-object token. In the pretty format,
-each line MUST be indented with an amount of whitespace corresponding to its
-depth in the object hierarchy.
+The pretty format differs from the concise format only in the following ways:
+
+1. If an object type includes more than zero properties, the generator MUST render
+   a newline newline character (1) after each begin-object token and (2) prior to
+  each end-object token, and (3) after each end-object token.
+
+2. When rendering object properties, the generator SHOULD render the name-separator
+   as a colon (%x3A) followed by a single space character (%x20).
+
+2. Each line MUST be indented with an amount of whitespace proportional to its
+   depth in the object hierarchy. A specific whitespace string is not defined.
+
+Note that any JSTN text with no non-empty objects renders identically in both the
+concise and pretty formats.
 
 Other valid formatting variations exist, and a JSTN generator MAY additionally
 implement support for other such variations.
