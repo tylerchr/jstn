@@ -50,6 +50,10 @@ func TestParser(t *testing.T) {
 			}},
 		},
 		{
+			Schema: `[]?`,
+			Parsed: Type{Kind: Array, Optional: true, Items: nil},
+		},
+		{
 			Schema: `[number?]`,
 			Parsed: Type{Kind: Array, Items: &Type{
 				Kind:     Number,

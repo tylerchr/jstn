@@ -197,6 +197,10 @@ func validArray(d *json.Decoder, t Type) bool {
 	defer d.Token()
 
 	for d.More() {
+		if t.Items == nil {
+			log.Println("validation failed: array: array is not empty")
+			return false
+		}
 		if ok := valid(d, *t.Items); !ok {
 			log.Println("validation failed: array: invalid sub-element")
 			return false
