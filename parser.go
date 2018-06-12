@@ -103,10 +103,21 @@ func (p *parser) parseArray() (Type, error) {
 		return Type{}, fmt.Errorf("unexpected token %s", tok.String())
 	}
 
-	// parse the internal type
-	t, err := p.parseType()
-	if err != nil {
-		return Type{}, err
+	// peek at the next character
+	tok, _ = p.scanIgnoreWhitespace(true)
+	p.unscan()
+
+	var childType *Type
+	if tok != SQUARECLOSE {
+
+		// parse the internal type
+		t, err := p.parseType()
+		if err != nil {
+			return Type{}, err
+		}
+
+		childType = &t
+
 	}
 
 	// parse the closing brace
@@ -115,7 +126,7 @@ func (p *parser) parseArray() (Type, error) {
 		return Type{}, fmt.Errorf("unexpected token %s", tok.String())
 	}
 
-	return Type{Kind: Array, Items: &t}, nil
+	return Type{Kind: Array, Items: childType}, nil
 }
 
 func (p *parser) parseObject() (Type, error) {

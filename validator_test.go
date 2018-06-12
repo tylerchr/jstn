@@ -119,6 +119,18 @@ func TestValid(t *testing.T) {
 		},
 
 		{
+			Type:     Type{Kind: Array, Optional: false, Items: nil},
+			TestData: json.RawMessage(`[]`),
+			Valid:    true,
+		},
+
+		{
+			Type:     Type{Kind: Array, Optional: false, Items: nil},
+			TestData: json.RawMessage(`[1, 2, 3, null]`),
+			Valid:    false,
+		},
+
+		{
 			Type: Type{Kind: Object, Optional: false, Properties: map[string]*Type{
 				"foo": &Type{Kind: Null},
 				"bar": &Type{Kind: Number},
