@@ -1,4 +1,4 @@
-// Package jstn implements a reference parser and validator for JSON Type Notation.
+// Package jstn implements a reference parser, validator, and generator for JSON Type Notation.
 package jstn
 
 import (
@@ -7,18 +7,20 @@ import (
 	"strings"
 )
 
+// Parse parses a JSTN text into a native representation.
+func Parse(schema string) (Type, error) {
+	r := strings.NewReader(schema)
+	p := &parser{s: newScanner(r)}
+	return p.Parse()
+}
+
+// MustParse is equivalent to Parse, except that it panics if the text cannot be parsed.
 func MustParse(schema string) Type {
 	t, err := Parse(schema)
 	if err != nil {
 		panic(err)
 	}
 	return t
-}
-
-func Parse(schema string) (Type, error) {
-	r := strings.NewReader(schema)
-	p := &parser{s: newScanner(r)}
-	return p.Parse()
 }
 
 type parser struct {
