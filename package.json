@@ -7,7 +7,8 @@
     "test": "jest",
     "dev": "webpack-dev-server --mode development --inline --port 4449",
     "build:dev": "webpack --mode development ./src/index.jsx --output ./dist/app.js",
-    "build:prod": "webpack --mode production ./src/index.jsx --output ./dist/app.js"
+    "build:prod": "webpack --mode production ./src/index.jsx --output ./dist/app.js",
+    "publish": "git subtree split --branch gh-pages --prefix dist/"
   },
   "repository": {
     "type": "git",
