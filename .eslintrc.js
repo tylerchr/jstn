@@ -8,6 +8,6 @@ module.exports = {
 	"rules": {
 		"max-len": [1, 120, 2, {ignoreComments: true}],
 		"react/prop-types": "off",
-		"no-colsole": "off"
+		"no-console": "off"
 	}
 };

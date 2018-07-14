@@ -18,7 +18,7 @@ module.exports = (env, argv) => {
 			path: path.resolve(__dirname, 'dist'),
 			publicPath: "/jstn/"
 		},
-		devtool: 'inline-source-map',
+		devtool: isProduction ? false : 'inline-source-map',
 		devServer: {
 			publicPath: "/jstn/",
 			hot: true
@@ -48,7 +48,7 @@ module.exports = (env, argv) => {
 						{
 							loader: "css-loader",
 							options: {
-								sourceMap: true,
+								sourceMap: !isProduction,
 								modules: true,
 								localIdentName: "[local]__[hash:base64:5]"
 							}

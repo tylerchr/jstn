@@ -1,3 +1,130 @@
-.app {
-	border: 1px solid red;
+@failure-color: #d63031;
+@valid-color: #2ecc71;
+@neutral-color: #dfe6e9;
+
+body {
+	margin: 0;
+}
+
+header {
+	background-color: #fbfbfb;
+	border-bottom: 1px solid #ebebeb;
+
+	margin: 0 0 24px 0;
+	padding: 8px;
+
+	h1 {
+		margin: 0;
+		padding: 4px 12px;
+
+		font-size: 1.5em;
+		font-family: 'Lato', sans-serif;
+
+		strong {
+			font-weight: 900;
+		}
+
+		span {
+			color: #cdcdcd;
+			font-weight: 400;
+			margin-left: 16px;
+		}
+	}
+}
+
+.wrapper {
+	display: grid;
+
+	grid-template-columns: auto 500px 24px 500px auto;
+	grid-template-rows: auto auto auto;
+
+	grid-template-areas:
+		". banner banner banner ."
+		". jstn . json ."
+		"main main main main main";
+
+	.banner {
+		// display: none;
+		grid-area: banner;
+		// border: 1px solid red;
+		font-family: 'Lato', sans-serif;
+
+		margin-bottom: 32px;
+
+		h2 {
+			margin: 0;
+		}
+	}
+
+	.jstnEditor {
+		grid-area: jstn;
+	}
+
+	.jsonEditor {
+		grid-area: json;
+	}
+
+	.main {
+		grid-area: main;
+		border: 1px solid red;
+		display: none;
+	}
+}
+
+.editor {
+
+	&.validation-perfect {
+		.content {
+			border-color: @valid-color;
+		}
+		.status {
+			border-color: @valid-color;
+			background-color: @valid-color;
+		}
+	}
+
+	&.validation-valid {
+		.content {
+			border-color: @neutral-color;
+		}
+		.status {
+			border-color: @neutral-color;
+			background-color: @neutral-color;
+		}
+	}
+
+	&.validation-invalid {
+		.content {
+			border-color: @failure-color;
+		}
+		.status {
+			border-color: @failure-color;
+			background-color: @failure-color;
+			color: white;
+		}
+	}
+
+	h2 {
+		font-family: 'Lato', sans-serif;
+		font-weight: 400;
+		font-size: 16pt;
+		margin: 0 0 12px 0;
+	}
+
+	.content {
+		border-width: 1px 1px 0 1px;
+		border-style: solid;
+		padding: 12px;
+		border-radius: 6px 6px 0 0;
+		text-align: center;
+	}
+
+	.status {
+		font-family: 'Lato', sans-serif;
+		border-width: 1px;
+		border-style: solid;
+		padding: 12px;
+		border-radius: 0 0 6px 6px;
+	}
+
 }
